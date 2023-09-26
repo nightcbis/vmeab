@@ -29,7 +29,7 @@ def setup_platform(
     _street = config["street"]
     _update_interval = config["update_interval"]
 
-    print("START!")
+    # print("START!")
 
     tunnor = fetchData(hass, _street, _city, _update_interval)
 
@@ -40,10 +40,10 @@ def setup_platform(
             [Trashcan(hass, tunna, hamtning, _street, _city, _update_interval)]
         )
 
-    add_entities([NextTrashCan()])
+    add_entities([NextTrashCan(hass, _street, _city, _update_interval)])
 
 
-def fetchData(hass, street, city, update_interval):
+def fetchData(hass: HomeAssistant, street, city, update_interval):
     tunnor = {}
     # Skapar filen om den inte finns
     jsonFilePath = Path(hass.config.path("vmeab.json"))
@@ -74,12 +74,12 @@ def fetchData(hass, street, city, update_interval):
         jsonFile.write(json.dumps(tunnor, indent=4))
         jsonFile.close()
 
-        print("Fetched new info from VMEAB:" + str(tunnor))
+        # print("Fetched new info from VMEAB:" + str(tunnor))
         return tunnor
 
     # Vi behövde inte hämta ifrån VMEAB så vi tar ifrån datan vi redan har ifrån filen.
     tunnor = jsonFileData
-    print("Fetched from file: " + str(tunnor))
+    # print("Fetched from file: " + str(tunnor))
 
     return tunnor
 
@@ -87,22 +87,28 @@ def fetchData(hass, street, city, update_interval):
 class Trashcan(SensorEntity):
     """En specifik tunna"""
 
-    def __init__(self, hass, name, hamtning, street, city, update_interval) -> None:
+    def __init__(
+        self, hass: HomeAssistant, name, hamtning, street, city, update_interval
+    ) -> None:
         self._attr_native_value = hamtning
         self._name = name
         self._last_update = time.time()
-        self._update_interval = update_interval
+        self._update_interval = update_interval  # Hur ofta vi kollar mot vmeab
         self._city = city
         self._street = street
         self._test_nummer = 1
         self._update_sensor_interval = 3600  # Uppdaterar bara sensorn en gång i timmen. Slipper öppna filen så ofta då.
+        self._hass = hass
+        self._attr_extra_state_attributes = {"days": "0"}  # Fixa detta.
 
     def update(self) -> None:
         """Updating"""
         # Behöver vi ens uppdatera oss?
         if time.time() - self._last_update > self._update_sensor_interval:
             # Hämtar ny data
-            tunnor = fetchData(hass, self._street, self._city, self._update_interval)
+            tunnor = fetchData(
+                self._hass, self._street, self._city, self._update_interval
+            )
 
             # Uppdaterar
             self._attr_native_value = tunnor[self._name]
@@ -120,9 +126,21 @@ class Trashcan(SensorEntity):
 class NextTrashCan(SensorEntity):
     """En sensor som säger vilken tunna som hämtas här näst"""
 
-    def __init__(self) -> None:
+    def __init__(self, hass: HomeAssistant, street, city, update_interval) -> None:
         self._name = "VMEAB Next Pickup"
-        self._attr_native_value = "Test"
+        self._attr_native_value = "Plast/Metall"
+        self._attr_extra_state_attributes = {"Days": "2"}
+        self._hass = hass
+        self._street = street
+        self._city = city
+        self._update_interval = update_interval  # Hur ofta vi kollar mot vmeab
+        self._update_sensor_interval = (
+            60  # Den här kollar vi en gång i minuten för att det ska synka bra.
+        )
+
+    def update(self) -> None:
+        tunnor = fetchData(self._hass, self._street, self._city, self._update_interval)
+        # Gå igenom tunnor och plocka ut den tunnan som är närmast hämtning.
 
     @property
     def name(self) -> str:
