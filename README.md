@@ -1,0 +1,1 @@
+Vastervik VMEAB sophamtnings-integration
