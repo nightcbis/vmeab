@@ -31,18 +31,22 @@ def setup_platform(
 
     print("START!")
 
-    tunnor = fetchData(_street, _city, _update_interval)
+    tunnor = fetchData(hass, _street, _city, _update_interval)
 
     for tunna, hamtning in tunnor.items():
         if tunna == "last_update":
             continue
-        add_entities([Trashcan(tunna, hamtning, _street, _city, _update_interval)])
+        add_entities(
+            [Trashcan(hass, tunna, hamtning, _street, _city, _update_interval)]
+        )
+
+    add_entities([NextTrashCan()])
 
 
-def fetchData(street, city, update_interval):
+def fetchData(hass, street, city, update_interval):
     tunnor = {}
     # Skapar filen om den inte finns
-    jsonFilePath = Path("/config/vmeab.json")
+    jsonFilePath = Path(hass.config.path("vmeab.json"))
     jsonFilePath.touch(exist_ok=True)
 
     jsonFile = open(jsonFilePath, "r")
@@ -83,7 +87,7 @@ def fetchData(street, city, update_interval):
 class Trashcan(SensorEntity):
     """En specifik tunna"""
 
-    def __init__(self, name, hamtning, street, city, update_interval) -> None:
+    def __init__(self, hass, name, hamtning, street, city, update_interval) -> None:
         self._attr_native_value = hamtning
         self._name = name
         self._last_update = time.time()
@@ -93,9 +97,16 @@ class Trashcan(SensorEntity):
         self._test_nummer = 1
         self._update_sensor_interval = 3600  # Uppdaterar bara sensorn en gång i timmen. Slipper öppna filen så ofta då.
 
-    @property
-    def device_info(self) -> DeviceInfo | None:
-        return super().device_info
+    def update(self) -> None:
+        """Updating"""
+        # Behöver vi ens uppdatera oss?
+        if time.time() - self._last_update > self._update_sensor_interval:
+            # Hämtar ny data
+            tunnor = fetchData(hass, self._street, self._city, self._update_interval)
+
+            # Uppdaterar
+            self._attr_native_value = tunnor[self._name]
+            self._last_update = time.time()
 
     @property
     def name(self) -> str:
@@ -105,13 +116,18 @@ class Trashcan(SensorEntity):
     def state(self) -> str:
         return self._attr_native_value
 
-    def update(self) -> None:
-        """Updating"""
-        # Behöver vi ens uppdatera oss?
-        if time.time() - self._last_update > self._update_sensor_interval:
-            # Hämtar ny data
-            tunnor = fetchData(self._street, self._city, self._update_interval)
 
-            # Uppdaterar
-            self._attr_native_value = tunnor[self._name]
-            self._last_update = time.time()
+class NextTrashCan(SensorEntity):
+    """En sensor som säger vilken tunna som hämtas här näst"""
+
+    def __init__(self) -> None:
+        self._name = "VMEAB Next Pickup"
+        self._attr_native_value = "Test"
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def state(self) -> str:
+        return self._attr_native_value
