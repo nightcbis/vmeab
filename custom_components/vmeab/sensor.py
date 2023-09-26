@@ -42,7 +42,7 @@ def setup_platform(
 def fetchData(street, city, update_interval):
     tunnor = {}
     # Skapar filen om den inte finns
-    jsonFilePath = Path("config/vmeab.json")
+    jsonFilePath = Path("/config/vmeab.json")
     jsonFilePath.touch(exist_ok=True)
 
     jsonFile = open(jsonFilePath, "r")
