@@ -1,0 +1,8 @@
+{
+    "domain": "vmeab",
+    "name": "VMEAB sophämtning",
+    "codeowners": ["@nightcbis"],
+    "iot_class": "cloud_polling",
+    "version": "0.1",
+    "requirements": ["beautifulsoup4==4.12.2"]
+}
