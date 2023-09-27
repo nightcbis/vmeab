@@ -1,9 +1,9 @@
 {
     "config": {
-      "title": "VMEAB Första title",
+      "title": "VMEAB Sophämtning",
       "step": {
         "user": {
-          "title": "VMEAB User-title",
+          "title": "VMEAB Sophämtning",
           "data": {
             "city": "Stad",
             "street": "Gata",
