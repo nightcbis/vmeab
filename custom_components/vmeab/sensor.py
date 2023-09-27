@@ -1,7 +1,6 @@
 """Platform for sensor integration."""
 from __future__ import annotations
 
-from .scraper import vmeab_scrape
 from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
 import time
 import json
