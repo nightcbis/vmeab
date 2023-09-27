@@ -1,2 +1,2 @@
 """ VMEAB Sophämtning """
-DOMAIN = "vmeab"
+from .const import DOMAIN

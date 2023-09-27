@@ -5,6 +5,7 @@ from .scraper import vmeab_scrape
 from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
 import time
 import json
+from .const import CONF_UPDATE_INTERVAL, CONF_CITY, CONF_STREET, DOMAIN
 from pathlib import Path
 
 from homeassistant.components.sensor import (
@@ -17,8 +18,6 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-DOMAIN = "vmeab"
-
 
 def setup_platform(
     hass: HomeAssistant,
@@ -26,9 +25,9 @@ def setup_platform(
     add_entities: AddEntitiesCallback,
     dicovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    _city = config["city"]
-    _street = config["street"]
-    _update_interval = config["update_interval"]
+    _city = config[CONF_CITY]
+    _street = config[CONF_STREET]
+    _update_interval = config[CONF_UPDATE_INTERVAL]
 
     tunnor = fetchData(hass, _street, _city, _update_interval)
 
