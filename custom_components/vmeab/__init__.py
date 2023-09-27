@@ -3,7 +3,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, CONF_CITY, CONF_STREET
-from .scraper import vmeab_scrape
 from .coordinator import MyCoordinator
 
 PLATFORMS = ["sensor"]
