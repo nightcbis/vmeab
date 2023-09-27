@@ -6,9 +6,7 @@ import voluptuous as vol
 from .const import (
     CONF_CITY,
     CONF_STREET,
-    CONF_UPDATE_INTERVAL,
     DOMAIN,
-    DEFAULT_UPDATE_INTEVAL,
 )
 
 from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
