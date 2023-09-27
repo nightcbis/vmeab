@@ -129,7 +129,12 @@ class NextTrashCan(SensorEntity):
     def __init__(self, hass: HomeAssistant, street, city, update_interval) -> None:
         self._name = "VMEAB Next Pickup"
         self._attr_native_value = "Plast/Metall"
-        self._attr_extra_state_attributes = {"Days": "2"}
+        self._attr_extra_state_attributes = {
+            "Days": "2",
+            "Rentext": self._attr_native_value + " om 2 dagar",
+            "Veckodag": "Tisdag",
+            "Hämtning": "Tisdag 3 oktober",
+        }
         self._hass = hass
         self._street = street
         self._city = city
