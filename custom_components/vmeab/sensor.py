@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from .scraper import vmeab_scrape
+from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
 import time
 import json
 from pathlib import Path
@@ -29,8 +30,6 @@ def setup_platform(
     _street = config["street"]
     _update_interval = config["update_interval"]
 
-    # print("START!")
-
     tunnor = fetchData(hass, _street, _city, _update_interval)
 
     for tunna, hamtning in tunnor.items():
@@ -49,7 +48,7 @@ def fetchData(hass: HomeAssistant, street, city, update_interval):
     jsonFilePath = Path(hass.config.path("vmeab.json"))
     jsonFilePath.touch(exist_ok=True)
 
-    jsonFile = open(jsonFilePath, "r")
+    jsonFile = open(jsonFilePath, "r", encoding="utf-8")
     jsonFileData = jsonFile.read()
     jsonFile.close()
 
@@ -70,7 +69,7 @@ def fetchData(hass: HomeAssistant, street, city, update_interval):
         tunnor = vmeab_scrape(street, city)
         tunnor["last_update"] = last_update
 
-        jsonFile = open(jsonFilePath, "w")
+        jsonFile = open(jsonFilePath, "w", encoding="utf-8")
         jsonFile.write(json.dumps(tunnor, indent=4))
         jsonFile.close()
 
@@ -99,7 +98,11 @@ class Trashcan(SensorEntity):
         self._test_nummer = 1
         self._update_sensor_interval = 3600  # Uppdaterar bara sensorn en gång i timmen. Slipper öppna filen så ofta då.
         self._hass = hass
-        self._attr_extra_state_attributes = {"days": "0"}  # Fixa detta.
+        self._attr_extra_state_attributes = {
+            "Datetime": omvandlaTillDatetime(self._attr_native_value),
+            "Veckodag": self._attr_native_value.split(" ")[0],
+            "Dagar": dagarTillDatum(self._attr_native_value),
+        }
 
     def update(self) -> None:
         """Updating"""
@@ -112,6 +115,11 @@ class Trashcan(SensorEntity):
 
             # Uppdaterar
             self._attr_native_value = tunnor[self._name]
+            self._attr_extra_state_attributes = {
+                "Datetime": omvandlaTillDatetime(self._attr_native_value),
+                "Veckodag": self._attr_native_value.split(" ")[0],
+                "Dagar": dagarTillDatum(self._attr_native_value),
+            }
             self._last_update = time.time()
 
     @property
@@ -123,18 +131,24 @@ class Trashcan(SensorEntity):
         return self._attr_native_value
 
 
+def hittaTunna(tunnor):
+    tunnorArray = {}
+    for tunna, hamtning in tunnor.items():
+        if tunna == "last_update":
+            continue
+        tunnorArray[tunna] = dagarTillDatum(hamtning)
+
+    # print(tunnorArray)
+    # print(f"Min:[{min(tunnorArray, key=tunnorArray.get)}] {min(tunnorArray.values())}")
+
+    return min(tunnorArray, key=tunnorArray.get)
+
+
 class NextTrashCan(SensorEntity):
     """En sensor som säger vilken tunna som hämtas här näst"""
 
     def __init__(self, hass: HomeAssistant, street, city, update_interval) -> None:
         self._name = "VMEAB Next Pickup"
-        self._attr_native_value = "Plast/Metall"
-        self._attr_extra_state_attributes = {
-            "Days": "2",
-            "Rentext": self._attr_native_value + " om 2 dagar",
-            "Veckodag": "Tisdag",
-            "Hämtning": "Tisdag 3 oktober",
-        }
         self._hass = hass
         self._street = street
         self._city = city
@@ -142,10 +156,44 @@ class NextTrashCan(SensorEntity):
         self._update_sensor_interval = (
             60  # Den här kollar vi en gång i minuten för att det ska synka bra.
         )
+        # Hämtar rätt tunna till "tunna"
+        tunnor = fetchData(self._hass, self._street, self._city, self._update_interval)
+        tunna = hittaTunna(tunnor)
+
+        self._attr_native_value = tunna
+        # print(tunna)
+        self._attr_extra_state_attributes = {
+            "Datetime": omvandlaTillDatetime(tunnor[self._attr_native_value]),
+            "Veckodag": tunnor[self._attr_native_value].split(" ")[0],
+            "Dagar": dagarTillDatum(tunnor[self._attr_native_value]),
+            "Rentext": self._attr_native_value
+            + " om "
+            + str(dagarTillDatum(tunnor[self._attr_native_value]))
+            + " dagar",
+            "Hämtning": tunnor[tunna],
+        }
 
     def update(self) -> None:
-        tunnor = fetchData(self._hass, self._street, self._city, self._update_interval)
-        # Gå igenom tunnor och plocka ut den tunnan som är närmast hämtning.
+        # Behöver vi ens uppdatera oss?
+        if time.time() - self._last_update > self._update_sensor_interval:
+            # Hämtar tunnan
+            tunnor = fetchData(
+                self._hass, self._street, self._city, self._update_interval
+            )
+            tunna = hittaTunna(tunnor)
+
+            # uppdaterar
+            self._attr_native_value = tunna
+            self._attr_extra_state_attributes = {
+                "Datetime": omvandlaTillDatetime(tunnor[self._attr_native_value]),
+                "Veckodag": tunnor[self._attr_native_value].split(" ")[0],
+                "Dagar": dagarTillDatum(tunnor[self._attr_native_value]),
+                "Rentext": self._attr_native_value
+                + " om "
+                + str(dagarTillDatum(tunnor[self._attr_native_value]))
+                + " dagar",
+                "Hämtning": tunnor[tunna],
+            }
 
     @property
     def name(self) -> str:
