@@ -11,7 +11,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.core import HomeAssistant
 from bs4 import BeautifulSoup
-from .const import DOMAIN, CONFIG_FILE, CONF_UPDATE_INTERVAL
+from .const import DOMAIN, CONFIG_FILE, CONF_COORDINATOR_UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class MyCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="VMEAB Coordinator",
-            update_interval=CONF_UPDATE_INTERVAL,
+            update_interval=CONF_COORDINATOR_UPDATE_INTERVAL,
         )
         self.my_api = my_api
         self._street = StreetName

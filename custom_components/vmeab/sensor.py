@@ -5,7 +5,7 @@ from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
 import time
 import json
 from .const import (
-    CONF_UPDATE_INTERVAL,
+    CONF_SENSOR_UPDATE_INTERVAL,
     CONF_CITY,
     CONF_STREET,
     DOMAIN,
@@ -75,7 +75,7 @@ def fetchData(
         firstRun = True
 
     # Vi behöver göra en scrape från VMEAB
-    #    if firstRun == True or (time.time() - last_update > CONF_UPDATE_INTERVAL):
+    #    if firstRun == True or (time.time() - last_update > CONF_SENSOR_UPDATE_INTERVAL):
     #       last_update = time.time()
 
     # tunnor = vmeab_scrape(street, city)
@@ -104,7 +104,9 @@ class Trashcan(SensorEntity):
         self._attr_unique_id = name
         self._attr_icon = "mdi:trash-can"
         self._last_update = time.time()
-        self._update_interval = CONF_UPDATE_INTERVAL  # Hur ofta vi kollar mot vmeab
+        self._update_interval = (
+            CONF_SENSOR_UPDATE_INTERVAL  # Hur ofta vi kollar mot vmeab
+        )
         self._city = city
         self._street = street
         self._test_nummer = 1
@@ -175,7 +177,9 @@ class NextTrashCan(SensorEntity):
         self._hass = hass
         self._street = street
         self._city = city
-        self._update_interval = CONF_UPDATE_INTERVAL  # Hur ofta vi kollar mot vmeab
+        self._update_interval = (
+            CONF_SENSOR_UPDATE_INTERVAL  # Hur ofta vi kollar mot vmeab
+        )
         self._last_update = time.time()
         self._update_sensor_interval = (
             60  # Den här kollar vi en gång i minuten för att det ska synka bra.
