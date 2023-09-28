@@ -126,7 +126,7 @@ class Trashcan(SensorEntity):
     def update(self) -> None:
         """Updating"""
         # Behöver vi ens uppdatera oss?
-        if time.time() - self._last_update > self._update_sensor_interval:
+        if time.time() - self._last_update > int(self._update_sensor_interval):
             # Hämtar ny data
             tunnor = fetchData(self._hass, self._street, self._city)
 
@@ -207,7 +207,7 @@ class NextTrashCan(SensorEntity):
 
     def update(self) -> None:
         # Behöver vi ens uppdatera oss?
-        if time.time() - self._last_update > self._update_sensor_interval:
+        if time.time() - self._last_update > int(self._update_sensor_interval):
             # Hämtar tunnan
             tunnor = fetchData(self._hass, self._street, self._city)
             tunna = hittaTunna(tunnor)
