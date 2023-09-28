@@ -110,7 +110,7 @@ class Trashcan(SensorEntity):
         self._city = city
         self._street = street
         self._test_nummer = 1
-        self._update_sensor_interval = 3600  # Uppdaterar bara sensorn en gång i timmen. Slipper öppna filen så ofta då.
+        self._update_sensor_interval = CONF_SENSOR_UPDATE_INTERVAL  # Uppdaterar bara sensorn en gång i timmen. Slipper öppna filen så ofta då.
         self._hass = hass
         self._attr_extra_state_attributes = {
             "Datetime": omvandlaTillDatetime(self._attr_native_value),
