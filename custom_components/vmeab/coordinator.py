@@ -2,7 +2,9 @@ import logging
 import aiohttp
 import json
 import time
+import asyncio
 
+from datetime import timedelta
 from pathlib import Path
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -48,7 +50,7 @@ class MyCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="VMEAB Coordinator",
-            update_interval=CONF_COORDINATOR_UPDATE_INTERVAL,
+            update_interval=timedelta(seconds=int(CONF_COORDINATOR_UPDATE_INTERVAL)),
         )
         self.my_api = my_api
         self._street = StreetName
@@ -63,7 +65,9 @@ class MyCoordinator(DataUpdateCoordinator):
         HOSTURL = "https://www.vmeab.se"
 
         vmeab = aiohttp.ClientSession()
-        soup = await async_get_page(vmeab, URL)
+        get_page = asyncio.create_task(async_get_page(vmeab, URL))
+        # soup = await async_get_page(vmeab, URL)
+        soup = await get_page
 
         # Hittar formen för sökningen. Vi måste plocka ur en dold nyckel där med mera.
         form = soup.find(id="wasteDisposalNextPickupForm")
@@ -83,7 +87,9 @@ class MyCoordinator(DataUpdateCoordinator):
             "City": self._city,
         }
 
-        soup = await async_post_page(vmeab, formURL, data)
+        # soup = await async_post_page(vmeab, formURL, data)
+        post_page = asyncio.create_task(async_post_page(vmeab, formURL, data))
+        soup = await post_page
         await vmeab.close()
 
         # Varje tunna ligger som en egen div med class waste-disposal-search-result-item
@@ -100,4 +106,5 @@ class MyCoordinator(DataUpdateCoordinator):
             )
 
         tunnor["last_update"] = time.time()
+        print(tunnor)
         saveFile(self._hass, tunnor)  # Spara ner resultatet
