@@ -128,9 +128,7 @@ class Trashcan(SensorEntity):
         # Behöver vi ens uppdatera oss?
         if time.time() - self._last_update > self._update_sensor_interval:
             # Hämtar ny data
-            tunnor = fetchData(
-                self._hass, self._street, self._city, self._update_interval
-            )
+            tunnor = fetchData(self._hass, self._street, self._city)
 
             # Uppdaterar
             self._attr_native_value = tunnor[self._name]
