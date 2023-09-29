@@ -5,7 +5,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from datetime import datetime, timedelta
+from datetime import datetime
 from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
 import json
 from .const import (
@@ -93,7 +93,7 @@ class Trashcan(CoordinatorEntity, SensorEntity):
             "Datetime": omvandlaTillDatetime(self._attr_native_value),
             "Veckodag": self._attr_native_value.split(" ")[0],
             "Dagar": dagarTillDatum(self._attr_native_value),
-            "Uppdaterad": datetime.now() + timedelta(hours=2),
+            "Uppdaterad": datetime.now(),
             "friendly_name": name,
         }
         self._attr_device_info = {
@@ -106,7 +106,7 @@ class Trashcan(CoordinatorEntity, SensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Handle updates when the coordinator gets new data"""
 
-        print(f"Klockan {datetime.now()+timedelta(hours=2)} uppdateras {self._name} ")
+        print(f"Klockan {datetime.now()} uppdateras {self._name} ")
 
         # Hämtar ny data
         tunnor = fetchData(self._hass)
@@ -117,7 +117,7 @@ class Trashcan(CoordinatorEntity, SensorEntity):
             "Datetime": omvandlaTillDatetime(self._attr_native_value),
             "Veckodag": self._attr_native_value.split(" ")[0],
             "Dagar": dagarTillDatum(self._attr_native_value),
-            "Uppdaterad": datetime.now() + timedelta(hours=2),
+            "Uppdaterad": datetime.now(),
             "friendly_name": self._name,
         }
         self.async_write_ha_state()  # Måste köras för att HA ska förstå att vi uppdaterat allt klart.
@@ -180,12 +180,12 @@ class NextTrashCan(CoordinatorEntity, SensorEntity):
             + str(dagarTillDatum(self._tunnor[self._attr_native_value]))
             + " dagar",
             "Hämtning": self._tunnor[self._tunna],
-            "Uppdaterad": datetime.now() + timedelta(hours=2),
+            "Uppdaterad": datetime.now(),
         }
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        print(f"Klockan {datetime.now()+timedelta(hours=2)} uppdateras {self._name} ")
+        print(f"Klockan {datetime.now()} uppdateras {self._name} ")
         # Hämtar tunnan
         self._tunnor = fetchData(self._hass)
         self._tunna = self.hittaTunna(self._tunnor)
@@ -199,7 +199,7 @@ class NextTrashCan(CoordinatorEntity, SensorEntity):
             + str(dagarTillDatum(self._tunnor[self._attr_native_value]))
             + " dagar",
             "Hämtning": self._tunnor[self._tunna],
-            "Uppdaterad": datetime.now() + timedelta(hours=2),
+            "Uppdaterad": datetime.now(),
         }
         self.async_write_ha_state()
 
