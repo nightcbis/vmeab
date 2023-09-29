@@ -5,13 +5,10 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from datetime import datetime
+from datetime import datetime, timedelta
 from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
-import time
 import json
 from .const import (
-    CONF_CITY,
-    CONF_STREET,
     DOMAIN,
     CONFIG_FILE,
     DEVICE_NAME,
@@ -38,11 +35,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 async def async_setup_entry(
     hass: HomeAssistant, config_entry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    # _city = config[CONF_CITY]
-    # _street = config[CONF_STREET]
-    _city = config_entry.data.get(CONF_CITY)
-    _street = config_entry.data.get(CONF_STREET)
-    tunnor = fetchData(hass, _street, _city)
+    tunnor = fetchData(hass)
 
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
@@ -51,18 +44,18 @@ async def async_setup_entry(
         if tunna == "last_update":
             continue
 
-        entities.append(Trashcan(hass, coordinator, tunna, hamtning, _street, _city))
+        entities.append(Trashcan(hass, coordinator, tunna, hamtning))
 
-    entities.append(NextTrashCan(hass, coordinator, _street, _city))
+    entities.append(NextTrashCan(hass, coordinator))
 
     async_add_entities(entities)
 
 
 def fetchData(
-    hass: HomeAssistant, street, city
-):  # Måste fixa så den inte kraschar om den körs utan json-filen
+    hass: HomeAssistant,
+):
     tunnor = {}
-    # Skapar filen om den inte finns
+    # Skapar filen om den inte finns (Bör aldrig kunna hända)
     jsonFilePath = Path(hass.config.path(CONFIG_FILE))
     jsonFilePath.touch(exist_ok=True)
 
@@ -70,35 +63,13 @@ def fetchData(
     jsonFileData = jsonFile.read()
     jsonFile.close()
 
-    last_update = time.time()
-    firstRun = False
-
     # Kollar om vi har skapat filen tidigare
     try:
         jsonFileData = json.loads(jsonFileData)
-        last_update = jsonFileData["last_update"]
+        tunnor = jsonFileData
+        return tunnor
     except:
-        firstRun = True
-
-    # Vi behöver göra en scrape från VMEAB
-    #    if firstRun == True or (time.time() - last_update > CONF_SENSOR_UPDATE_INTERVAL):
-    #       last_update = time.time()
-
-    # tunnor = vmeab_scrape(street, city)
-    #       tunnor["last_update"] = last_update
-
-    #        jsonFile = open(jsonFilePath, "w", encoding="utf-8")
-    #       jsonFile.write(json.dumps(tunnor, indent=4))
-    #       jsonFile.close()
-
-    # print("Fetched new info from VMEAB:" + str(tunnor))
-    #      return tunnor
-
-    # Vi behövde inte hämta ifrån VMEAB så vi tar ifrån datan vi redan har ifrån filen.
-    tunnor = jsonFileData
-    # print("Fetched from file: " + str(tunnor))
-
-    return tunnor
+        return tunnor
 
 
 class Trashcan(CoordinatorEntity, SensorEntity):
@@ -110,8 +81,6 @@ class Trashcan(CoordinatorEntity, SensorEntity):
         coordinator: DataUpdateCoordinator,
         name,
         hamtning,
-        street,
-        city,
     ) -> None:
         super().__init__(coordinator)
         self._attr_native_value = hamtning
@@ -119,14 +88,12 @@ class Trashcan(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = "VMEAB " + name
         self._attr_icon = "mdi:trash-can"
         self._hamtning = hamtning
-        self._city = city
-        self._street = street
         self._hass = hass
         self._attr_extra_state_attributes = {
             "Datetime": omvandlaTillDatetime(self._attr_native_value),
             "Veckodag": self._attr_native_value.split(" ")[0],
             "Dagar": dagarTillDatum(self._attr_native_value),
-            "Uppdaterad": datetime.now(),
+            "Uppdaterad": datetime.now() + timedelta(hours=2),
             "friendly_name": name,
         }
         self._attr_device_info = {
@@ -139,10 +106,10 @@ class Trashcan(CoordinatorEntity, SensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Handle updates when the coordinator gets new data"""
 
-        print(f"Klockan {datetime.now()} uppdateras {self._name} ")
+        print(f"Klockan {datetime.now()+timedelta(hours=2)} uppdateras {self._name} ")
 
         # Hämtar ny data
-        tunnor = fetchData(self._hass, self._street, self._city)
+        tunnor = fetchData(self._hass)
 
         self._hamtning = tunnor[self._name]
         self._attr_native_value = self._hamtning
@@ -150,7 +117,7 @@ class Trashcan(CoordinatorEntity, SensorEntity):
             "Datetime": omvandlaTillDatetime(self._attr_native_value),
             "Veckodag": self._attr_native_value.split(" ")[0],
             "Dagar": dagarTillDatum(self._attr_native_value),
-            "Uppdaterad": datetime.now(),
+            "Uppdaterad": datetime.now() + timedelta(hours=2),
             "friendly_name": self._name,
         }
         self.async_write_ha_state()  # Måste köras för att HA ska förstå att vi uppdaterat allt klart.
@@ -171,32 +138,27 @@ class Trashcan(CoordinatorEntity, SensorEntity):
         return f"{DOMAIN}__providersensor"
 
 
-def hittaTunna(tunnor):
-    tunnorArray = {}
-    for tunna, hamtning in tunnor.items():
-        if tunna == "last_update":
-            continue
-        tunnorArray[tunna] = dagarTillDatum(hamtning)
-
-    # print(tunnorArray)
-    # print(f"Min:[{min(tunnorArray, key=tunnorArray.get)}] {min(tunnorArray.values())}")
-
-    return min(tunnorArray, key=tunnorArray.get)
-
-
 class NextTrashCan(CoordinatorEntity, SensorEntity):
     """En sensor som säger vilken tunna som hämtas här näst"""
 
-    def __init__(self, hass: HomeAssistant, coordinator, street, city) -> None:
+    # Letar reda på tunnan i tunnor-listan
+
+    def hittaTunna(self, tunnor):
+        tunnorArray = {}
+        for tunna, hamtning in tunnor.items():
+            if tunna == "last_update":
+                continue
+            tunnorArray[tunna] = dagarTillDatum(hamtning)
+
+        return min(tunnorArray, key=tunnorArray.get)
+
+    def __init__(self, hass: HomeAssistant, coordinator) -> None:
         super().__init__(coordinator)
-        # coordinator.async_add_listener(self._handle_coordinator_update)
 
         self._name = "VMEAB Next Pickup"
         self._attr_unique_id = self._name
         self._attr_icon = "mdi:trash-can"
         self._hass = hass
-        self._street = street
-        self._city = city
         self._attr_device_info = {
             ATTR_IDENTIFIERS: {(DOMAIN, DEVICE_NAME)},
             ATTR_NAME: DEVICE_NAME,
@@ -204,8 +166,8 @@ class NextTrashCan(CoordinatorEntity, SensorEntity):
         }
 
         # Hämtar rätt tunna till "tunna"
-        self._tunnor = fetchData(self._hass, self._street, self._city)
-        self._tunna = hittaTunna(self._tunnor)
+        self._tunnor = fetchData(self._hass)
+        self._tunna = self.hittaTunna(self._tunnor)
 
         self._attr_native_value = self._tunna
 
@@ -218,15 +180,15 @@ class NextTrashCan(CoordinatorEntity, SensorEntity):
             + str(dagarTillDatum(self._tunnor[self._attr_native_value]))
             + " dagar",
             "Hämtning": self._tunnor[self._tunna],
-            "Uppdaterad": datetime.now(),
+            "Uppdaterad": datetime.now() + timedelta(hours=2),
         }
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        print(f"Klockan {datetime.now()} uppdateras {self._name} ")
+        print(f"Klockan {datetime.now()+timedelta(hours=2)} uppdateras {self._name} ")
         # Hämtar tunnan
-        self._tunnor = fetchData(self._hass, self._street, self._city)
-        self._tunna = hittaTunna(self._tunnor)
+        self._tunnor = fetchData(self._hass)
+        self._tunna = self.hittaTunna(self._tunnor)
         self._attr_native_value = self._tunna
         self._attr_extra_state_attributes = {
             "Datetime": omvandlaTillDatetime(self._tunnor[self._attr_native_value]),
@@ -237,7 +199,7 @@ class NextTrashCan(CoordinatorEntity, SensorEntity):
             + str(dagarTillDatum(self._tunnor[self._attr_native_value]))
             + " dagar",
             "Hämtning": self._tunnor[self._tunna],
-            "Uppdaterad": datetime.now(),
+            "Uppdaterad": datetime.now() + timedelta(hours=2),
         }
         self.async_write_ha_state()
 

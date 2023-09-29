@@ -106,5 +106,4 @@ class MyCoordinator(DataUpdateCoordinator):
             )
 
         tunnor["last_update"] = time.time()
-        print(tunnor)
         saveFile(self._hass, tunnor)  # Spara ner resultatet
