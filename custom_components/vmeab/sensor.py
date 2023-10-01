@@ -3,7 +3,6 @@ from __future__ import annotations
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
-    UpdateFailed,
 )
 from datetime import datetime
 from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
@@ -16,9 +15,7 @@ from .const import (
 from pathlib import Path
 
 from homeassistant.components.sensor import (
-    SensorDeviceClass,
     SensorEntity,
-    SensorStateClass,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.const import (
@@ -46,9 +43,11 @@ async def async_setup_entry(
 
         entities.append(Trashcan(hass, coordinator, tunna, hamtning))
 
-    entities.append(NextTrashCan(hass, coordinator))
+    entities.append(
+        NextTrashCan(hass, coordinator)
+    )  # Lägger till alla tunnorna i denna array
 
-    async_add_entities(entities)
+    async_add_entities(entities)  # Skapar själva entities baserat på array'n
 
 
 def fetchData(
@@ -106,8 +105,6 @@ class Trashcan(CoordinatorEntity, SensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Handle updates when the coordinator gets new data"""
 
-        print(f"Klockan {datetime.now()} uppdateras {self._name} ")
-
         # Hämtar ny data
         tunnor = fetchData(self._hass)
 
@@ -143,14 +140,17 @@ class NextTrashCan(CoordinatorEntity, SensorEntity):
 
     # Letar reda på tunnan i tunnor-listan
 
-    def hittaTunna(self, tunnor):
+    @staticmethod
+    def hittaTunna(tunnor):
         tunnorArray = {}
         for tunna, hamtning in tunnor.items():
             if tunna == "last_update":
                 continue
             tunnorArray[tunna] = dagarTillDatum(hamtning)
 
-        return min(tunnorArray, key=tunnorArray.get)
+        return min(
+            tunnorArray, key=tunnorArray.get
+        )  # Retunerar bara den tunna med lägst antal dagar till hämtning
 
     def __init__(self, hass: HomeAssistant, coordinator) -> None:
         super().__init__(coordinator)
@@ -166,42 +166,42 @@ class NextTrashCan(CoordinatorEntity, SensorEntity):
         }
 
         # Hämtar rätt tunna till "tunna"
-        self._tunnor = fetchData(self._hass)
-        self._tunna = self.hittaTunna(self._tunnor)
+        tunnor = fetchData(self._hass)
+        tunna = self.hittaTunna(tunnor)
 
-        self._attr_native_value = self._tunna
+        self._attr_native_value = tunna
 
         self._attr_extra_state_attributes = {
-            "Datetime": omvandlaTillDatetime(self._tunnor[self._attr_native_value]),
-            "Veckodag": self._tunnor[self._attr_native_value].split(" ")[0],
-            "Dagar": dagarTillDatum(self._tunnor[self._attr_native_value]),
+            "Datetime": omvandlaTillDatetime(tunnor[self._attr_native_value]),
+            "Veckodag": tunnor[self._attr_native_value].split(" ")[0],
+            "Dagar": dagarTillDatum(tunnor[self._attr_native_value]),
             "Rentext": self._attr_native_value
             + " om "
-            + str(dagarTillDatum(self._tunnor[self._attr_native_value]))
+            + str(dagarTillDatum(tunnor[self._attr_native_value]))
             + " dagar",
-            "Hämtning": self._tunnor[self._tunna],
+            "Hämtning": tunnor[tunna],
             "Uppdaterad": datetime.now(),
         }
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        print(f"Klockan {datetime.now()} uppdateras {self._name} ")
         # Hämtar tunnan
-        self._tunnor = fetchData(self._hass)
-        self._tunna = self.hittaTunna(self._tunnor)
-        self._attr_native_value = self._tunna
+        tunnor = fetchData(self._hass)
+        tunna = self.hittaTunna(tunnor)
+
+        self._attr_native_value = tunna
         self._attr_extra_state_attributes = {
-            "Datetime": omvandlaTillDatetime(self._tunnor[self._attr_native_value]),
-            "Veckodag": self._tunnor[self._attr_native_value].split(" ")[0],
-            "Dagar": dagarTillDatum(self._tunnor[self._attr_native_value]),
+            "Datetime": omvandlaTillDatetime(tunnor[self._attr_native_value]),
+            "Veckodag": tunnor[self._attr_native_value].split(" ")[0],
+            "Dagar": dagarTillDatum(tunnor[self._attr_native_value]),
             "Rentext": self._attr_native_value
             + " om "
-            + str(dagarTillDatum(self._tunnor[self._attr_native_value]))
+            + str(dagarTillDatum(tunnor[self._attr_native_value]))
             + " dagar",
-            "Hämtning": self._tunnor[self._tunna],
+            "Hämtning": tunnor[tunna],
             "Uppdaterad": datetime.now(),
         }
-        self.async_write_ha_state()
+        self.async_write_ha_state()  # Säger till HA att uppdatera
 
     def update(self) -> None:
         """Används ej"""
