@@ -9,16 +9,9 @@
 VMEAB Sophantering / Västervik Miljö & Energi Sophantering
 ============================================
 
-A small Integration to get the pickups of VMEAB Trash pickups
 En liten Intregration som hämtar hämtningar av sopor ifrån VMEAB
 
-## Install using HACS
-
-* If you haven't already you must have [HACS installed](https://hacs.xyz/docs/setup/download).
-* Go into HACS and search for Svensk Postutdelning under the Integrations headline. Install it. You will need to restart Home Assistant to finish the process.
-* Once that is done, try to reload your GUI (caching issues could prevent the integration to be shown).
-* Goto Integrations and add Svensk Postutdelning or Swedish Mail Delivery (depending on language)
-* Enter postal code and select your providers
-* Sensors are created and updated. Enjoy!
-  - One sensor for each selected provider
-  - An additional combined sensor regardless of provider
+## Installera via HACS
+* Använd normala HACS rutinen.
+* Lägg till integrationen "VMEAB sophämtning"
+* Fyll i Gatuaddress och Stad
