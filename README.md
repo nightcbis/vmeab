@@ -6,10 +6,11 @@
 [![maintainer](https://img.shields.io/badge/maintainer-nightcbis-blue.svg)](https://github.com/DSorlov)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Svensk Postutdelning / Swedish Mail Delivery
+VMEAB Sophantering / Västervik Miljö & Energi Sophantering
 ============================================
 
-A small and simple integration to provide information about delivery days for Postnord and Citymail in any swedish postal code.
+A small Integration to get the pickups of VMEAB Trash pickups
+En liten Intregration som hämtar hämtningar av sopor ifrån VMEAB
 
 ## Install using HACS
 
