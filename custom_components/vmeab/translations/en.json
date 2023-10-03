@@ -6,7 +6,7 @@
         "title": "VMEAB Sophämtning",
         "data": {
           "city": "City",
-          "street": "Street"
+          "street": "Streetaddress"
         }
       }
     },
