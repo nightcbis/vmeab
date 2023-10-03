@@ -27,7 +27,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
 
 # Funktioner för att kunna avinstallera integrationen
-# Kom ihåg att ta bort vmeab.json då!!
 
 
 # Fixa så att det står något i rutan som dyker upp när man har lyckats lägga in integrationen.
