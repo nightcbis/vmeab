@@ -5,4 +5,5 @@
   "render_readme": false,
   "homeassistant": "2023.10.0",
   "zip_release": false
+  "documentation": "https://github.com/nightcbis/vmeab/"
 }
