@@ -1,0 +1,8 @@
+{
+  "name": "VMEAB Sophämtning",
+  "content_in_root": false,
+  "country": "SE",
+  "render_readme": false,
+  "homeassistant": "2023.10.0",
+  "zip_release": false
+}
