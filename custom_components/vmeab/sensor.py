@@ -59,13 +59,17 @@ class Trash(CoordinatorEntity, SensorEntity):
         self._attr_icon = "mdi:trash-can"
         self._attr_native_value = state
         self._name = name
-        self._attr_unique_id = "VMEAB " + name
+        self._attr_unique_id = name
         self._hass = hass
+
+        self._attr_translation_key = "vmeab"
         self._attr_device_info = {
             ATTR_IDENTIFIERS: {(DOMAIN, DEVICE_NAME)},
             ATTR_NAME: DEVICE_NAME,
             ATTR_MANUFACTURER: "@nightcbis",
         }
+        self._attr_has_entity_name = True
+        print(f"Name: {self._name}")
 
     def update(self) -> None:
         """Används ej"""
@@ -73,6 +77,10 @@ class Trash(CoordinatorEntity, SensorEntity):
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def unique_id(self) -> str:
+        return self._attr_unique_id
 
     @property
     def state(self) -> str:
@@ -96,7 +104,8 @@ class Trashcan(Trash):
         # hass, coordinator, name, state
         super().__init__(hass, coordinator, name, tunna)
         self._coordinator = coordinator
-        self._attr_extra_state_attributes = self.attributes()
+        self._attr_native_value = dagarTillDatum(coordinator.tunnor[self._name])
+        self._attr_extra_state_attributes = self.attributes(coordinator.tunnor)
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -105,25 +114,26 @@ class Trashcan(Trash):
         # Hämtar ny data
         tunnor = self._coordinator.tunnor
 
-        self._attr_native_value = tunnor[self._name]
-        self._attr_extra_state_attributes = self.attributes()
+        # self._attr_native_value = tunnor[self._name]
+        self._attr_native_value = dagarTillDatum(tunnor[self._name])
+        self._attr_extra_state_attributes = self.attributes(tunnor)
         self.async_write_ha_state()  # Måste köras för att HA ska förstå att vi uppdaterat allt klart.
 
-    def attributes(self):
+    def attributes(self, tunnor):
         """Funktion för att fixa attributes så det slipper ligga dubbelt i __init__ samt _handle_coordinator_update"""
+        print(f"Friendly name: {self._name}")
         return {
-            "Datetime": omvandlaTillDatetime(self._attr_native_value),
-            "Veckodag": self._attr_native_value.split(" ")[0],
-            "Dagar": dagarTillDatum(self._attr_native_value),
+            "Hämtning": tunnor[self._name],
+            "Datetime": omvandlaTillDatetime(tunnor[self._name]),
+            "Veckodag": tunnor[self._name].split(" ")[0],
+            "Dagar": dagarTillDatum(tunnor[self._name]),
             "Uppdaterad": datetime.now(),
-            "friendly_name": self._name,
+            # "friendly_name": self._name,
         }
 
 
 class NextTrashCan(Trash):
     """En sensor som säger vilken tunna som hämtas här näst"""
-
-    # Letar reda på tunnan i tunnor-listan
 
     def __init__(self, hass: HomeAssistant, coordinator) -> None:
         self._name = "Next Pickup"
@@ -158,7 +168,7 @@ class NextTrashCan(Trash):
         return {
             "Datetime": omvandlaTillDatetime(tunnor[nastaTunna]),
             "Veckodag": tunnor[nastaTunna].split(" ")[0],
-            "Dagar": dagarTillDatum(tunnor[nastaTunna]),
+            "Dagar": f"{dagarTillDatum(tunnor[nastaTunna])} dagar",
             "Rentext": f"{self._attr_native_value} om {str(dagarTillDatum(tunnor[nastaTunna]))} dagar",
             "Hämtning": tunnor[nastaTunna],
             "Uppdaterad": datetime.now(),

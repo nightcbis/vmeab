@@ -1,4 +1,5 @@
 {
+  "title":"VMEAB Sophämtning",
   "config": {
     "title": "VMEAB Sophämtning",
     "step": {
@@ -6,16 +7,63 @@
         "title": "VMEAB Sophämtning",
         "data": {
           "city": "Stad",
-          "street": "Gata",
-          "update_interval": "Uppdateringsfrekvens(sekunder)"
+          "street": "Gata"
         }
       }
     },
     "error": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Integrationen är redan installerad"
     },
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Integrationen är redan installerad"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "vmeab": {
+        "state":{
+          "0": "Idag",
+          "1": "Imorgon",
+          "2": "Om 2 dagar",
+          "7": "Om 1 vecka",
+          "14": "Om 3 veckor",
+          "21": "Om 4 veckor",
+          "28": "Om 5 veckor"
+        },
+        "state_attributes": {
+          "Dagar": {
+            "name": "Dagar till hämtning",
+            "state": {
+              "0 dagar": "Idag",
+              "1 dagar": "Imorgon",
+              "2 dagar": "Om 2 dagar",
+              "3 dagar": "Om 3 dagar",
+              "4 dagar": "Om 4 dagar",
+              "5 dagar": "Om 5 dagar",
+              "6 dagar": "Om 6 dagar"
+            }
+          },
+          "Uppdaterad": {
+            "name": "Uppdaterad"
+          },
+          "Hämtning": {
+            "name": "Hämtas"
+          },
+          "Rentext": {
+            "name": "Rentext"
+          },
+          "Veckodag": {
+            "name": "Veckodagar",
+            "state": {
+              "Måndag": "Måndagar",
+              "Tisdag": "Tisdagar",
+              "Onsdag": "Onsdagar",
+              "Torsdag": "Torsdagar",
+              "Fredag": "Fredagar"
+            }
+          }
+        }
+      }
     }
   }
 }

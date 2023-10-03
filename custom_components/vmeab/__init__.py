@@ -26,7 +26,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     return True
 
 
-# Funktioner för att kunna avinstallera integrationen
+async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+    """Unload a config entry."""
+    unload_ok = await hass.config_entries.async_unload_platforms(config_entry, "sensor")
+    if unload_ok:
+        del hass.data[DOMAIN]
 
-
-# Fixa så att det står något i rutan som dyker upp när man har lyckats lägga in integrationen.
+    return unload_ok

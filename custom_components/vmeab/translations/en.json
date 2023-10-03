@@ -5,9 +5,8 @@
       "user": {
         "title": "VMEAB Sophämtning",
         "data": {
-          "city": "Stad",
-          "street": "Gata",
-          "update_interval": "Uppdateringsfrekvens(sekunder)"
+          "city": "City",
+          "street": "Street"
         }
       }
     },
@@ -16,6 +15,54 @@
     },
     "abort": {
       "already_configured": "Device is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "vmeab": {
+        "state":{
+          "0": "Today",
+          "1": "Tomorrow",
+          "2": "In 2 days",
+          "7": "1 week",
+          "14": "2 weeks",
+          "21": "3 weeks",
+          "28": "4 weeks"
+        },
+        "state_attributes": {
+          "Dagar": {
+            "name": "Days to pickup",
+            "state": {
+              "0 dagar": "Today",
+              "1 dagar": "Tomorrow",
+              "2 dagar": "In 2 days",
+              "3 dagar": "In 3 days",
+              "4 dagar": "In 4 days",
+              "5 dagar": "In 5 days",
+              "6 dagar": "In 6 days"
+            }
+          },
+          "Uppdaterad": {
+            "name": "Updated"
+          },
+          "Hämtning": {
+            "name": "Pickup"
+          },
+          "Rentext": {
+            "name": "Clean text"
+          },
+          "Veckodag": {
+            "name": "Weekdays",
+            "state": {
+              "Måndag": "Mondays",
+              "Tisdag": "Tuesdays",
+              "Onsdag": "Wednesdays",
+              "Torsdag": "Thursdays",
+              "Fredag": "Fridays"
+            }
+          }
+        }
+      }
     }
   }
 }

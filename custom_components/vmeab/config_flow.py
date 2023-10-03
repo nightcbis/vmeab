@@ -1,6 +1,7 @@
 from typing import Any
 from homeassistant import config_entries, data_entry_flow
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.core import callback
 
 import voluptuous as vol
 from .const import (
@@ -28,7 +29,12 @@ class vmeabConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        """Create step flow."""
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            return self.async_create_entry(title="VMEAB Sophämtning", data=user_input)
+
+        # Kollar så vi inte dubbelskapar integrationen.
+        await self.async_set_unique_id("vmeab_unique_id")
+        self._abort_if_unique_id_configured()
 
         return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
