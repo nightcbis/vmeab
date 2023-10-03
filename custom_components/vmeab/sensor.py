@@ -9,7 +9,6 @@ from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
 import json
 from .const import (
     DOMAIN,
-    CONFIG_FILE,
     DEVICE_NAME,
 )
 from pathlib import Path
@@ -32,15 +31,17 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 async def async_setup_entry(
     hass: HomeAssistant, config_entry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    tunnor = fetchData(hass)
+    # tunnor = Trash.fetchData(hass)
 
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
+    tunnor = coordinator.tunnor
+
     entities = []
+    # Hittar alla olika typer av tunnor som finns.
     for tunna, hamtning in tunnor.items():
         if tunna == "last_update":
             continue
-
         entities.append(Trashcan(hass, coordinator, tunna, hamtning))
 
     entities.append(
@@ -50,74 +51,21 @@ async def async_setup_entry(
     async_add_entities(entities)  # Skapar själva entities baserat på array'n
 
 
-def fetchData(
-    hass: HomeAssistant,
-):
-    tunnor = {}
-    # Skapar filen om den inte finns (Bör aldrig kunna hända)
-    jsonFilePath = Path(hass.config.path(CONFIG_FILE))
-    jsonFilePath.touch(exist_ok=True)
-
-    jsonFile = open(jsonFilePath, "r", encoding="utf-8")
-    jsonFileData = jsonFile.read()
-    jsonFile.close()
-
-    # Kollar om vi har skapat filen tidigare
-    try:
-        jsonFileData = json.loads(jsonFileData)
-        tunnor = jsonFileData
-        return tunnor
-    except:
-        return tunnor
-
-
-class Trashcan(CoordinatorEntity, SensorEntity):
-    """En specifik tunna"""
-
+class Trash(CoordinatorEntity, SensorEntity):
     def __init__(
-        self,
-        hass: HomeAssistant,
-        coordinator: DataUpdateCoordinator,
-        name,
-        hamtning,
+        self, hass: HomeAssistant, coordinator: DataUpdateCoordinator, name, state
     ) -> None:
         super().__init__(coordinator)
-        self._attr_native_value = hamtning
+        self._attr_icon = "mdi:trash-can"
+        self._attr_native_value = state
         self._name = name
         self._attr_unique_id = "VMEAB " + name
-        self._attr_icon = "mdi:trash-can"
-        self._hamtning = hamtning
         self._hass = hass
-        self._attr_extra_state_attributes = {
-            "Datetime": omvandlaTillDatetime(self._attr_native_value),
-            "Veckodag": self._attr_native_value.split(" ")[0],
-            "Dagar": dagarTillDatum(self._attr_native_value),
-            "Uppdaterad": datetime.now(),
-            "friendly_name": name,
-        }
         self._attr_device_info = {
             ATTR_IDENTIFIERS: {(DOMAIN, DEVICE_NAME)},
             ATTR_NAME: DEVICE_NAME,
             ATTR_MANUFACTURER: "@nightcbis",
         }
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updates when the coordinator gets new data"""
-
-        # Hämtar ny data
-        tunnor = fetchData(self._hass)
-
-        self._hamtning = tunnor[self._name]
-        self._attr_native_value = self._hamtning
-        self._attr_extra_state_attributes = {
-            "Datetime": omvandlaTillDatetime(self._attr_native_value),
-            "Veckodag": self._attr_native_value.split(" ")[0],
-            "Dagar": dagarTillDatum(self._attr_native_value),
-            "Uppdaterad": datetime.now(),
-            "friendly_name": self._name,
-        }
-        self.async_write_ha_state()  # Måste köras för att HA ska förstå att vi uppdaterat allt klart.
 
     def update(self) -> None:
         """Används ej"""
@@ -135,13 +83,91 @@ class Trashcan(CoordinatorEntity, SensorEntity):
         return f"{DOMAIN}__providersensor"
 
 
-class NextTrashCan(CoordinatorEntity, SensorEntity):
+class Trashcan(Trash):
+    """En specifik tunna"""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        coordinator: DataUpdateCoordinator,
+        name,
+        tunna,
+    ) -> None:
+        # hass, coordinator, name, state
+        super().__init__(hass, coordinator, name, tunna)
+        self._coordinator = coordinator
+        self._attr_extra_state_attributes = self.attributes()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Den här funktionen körs när coordinator kör sin uppdatering"""
+
+        # Hämtar ny data
+        tunnor = self._coordinator.tunnor
+
+        self._attr_native_value = tunnor[self._name]
+        self._attr_extra_state_attributes = self.attributes()
+        self.async_write_ha_state()  # Måste köras för att HA ska förstå att vi uppdaterat allt klart.
+
+    def attributes(self):
+        """Funktion för att fixa attributes så det slipper ligga dubbelt i __init__ samt _handle_coordinator_update"""
+        return {
+            "Datetime": omvandlaTillDatetime(self._attr_native_value),
+            "Veckodag": self._attr_native_value.split(" ")[0],
+            "Dagar": dagarTillDatum(self._attr_native_value),
+            "Uppdaterad": datetime.now(),
+            "friendly_name": self._name,
+        }
+
+
+class NextTrashCan(Trash):
     """En sensor som säger vilken tunna som hämtas här näst"""
 
     # Letar reda på tunnan i tunnor-listan
 
+    def __init__(self, hass: HomeAssistant, coordinator) -> None:
+        self._name = "Next Pickup"
+        self._coordinator = coordinator
+
+        # Hämtar rätt tunna till "tunna"
+        tunnor = self._coordinator.tunnor
+
+        # tunnor = Trash.fetchData(hass)
+        tunna = self.hittaTunna(tunnor)
+
+        # Hass, coordinator, name, state
+        super().__init__(hass, coordinator, self._name, tunna)
+
+        self._attr_extra_state_attributes = self.attributes(tunnor, tunna)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Den här funktionen körs när coordinator kör sin uppdatering"""
+        # Hämtar tunnan
+        tunnor = self._coordinator.tunnor
+        # tunnor = Trash.fetchData(self._hass)
+        nastaTunna = self.hittaTunna(tunnor)
+
+        self._attr_native_value = nastaTunna
+        self._attr_extra_state_attributes = self.attributes(tunnor, nastaTunna)
+
+        self.async_write_ha_state()  # Säger till HA att uppdatera
+
+    def attributes(self, tunnor, nastaTunna):
+        """Funktion för att fixa attributes så det slipper ligga dubbelt i __init__ samt _handle_coordinator_update"""
+        return {
+            "Datetime": omvandlaTillDatetime(tunnor[nastaTunna]),
+            "Veckodag": tunnor[nastaTunna].split(" ")[0],
+            "Dagar": dagarTillDatum(tunnor[nastaTunna]),
+            "Rentext": f"{self._attr_native_value} om {str(dagarTillDatum(tunnor[nastaTunna]))} dagar",
+            "Hämtning": tunnor[nastaTunna],
+            "Uppdaterad": datetime.now(),
+            "friendly_name": self._name,
+        }
+
     @staticmethod
     def hittaTunna(tunnor):
+        """Den här funktionen hittar vilken tunna som är nästa tunna att hämtas."""
         tunnorArray = {}
         for tunna, hamtning in tunnor.items():
             if tunna == "last_update":
@@ -151,65 +177,3 @@ class NextTrashCan(CoordinatorEntity, SensorEntity):
         return min(
             tunnorArray, key=tunnorArray.get
         )  # Retunerar bara den tunna med lägst antal dagar till hämtning
-
-    def __init__(self, hass: HomeAssistant, coordinator) -> None:
-        super().__init__(coordinator)
-
-        self._name = "VMEAB Next Pickup"
-        self._attr_unique_id = self._name
-        self._attr_icon = "mdi:trash-can"
-        self._hass = hass
-        self._attr_device_info = {
-            ATTR_IDENTIFIERS: {(DOMAIN, DEVICE_NAME)},
-            ATTR_NAME: DEVICE_NAME,
-            ATTR_MANUFACTURER: "@nightcbis",
-        }
-
-        # Hämtar rätt tunna till "tunna"
-        tunnor = fetchData(self._hass)
-        tunna = self.hittaTunna(tunnor)
-
-        self._attr_native_value = tunna
-
-        self._attr_extra_state_attributes = {
-            "Datetime": omvandlaTillDatetime(tunnor[self._attr_native_value]),
-            "Veckodag": tunnor[self._attr_native_value].split(" ")[0],
-            "Dagar": dagarTillDatum(tunnor[self._attr_native_value]),
-            "Rentext": self._attr_native_value
-            + " om "
-            + str(dagarTillDatum(tunnor[self._attr_native_value]))
-            + " dagar",
-            "Hämtning": tunnor[tunna],
-            "Uppdaterad": datetime.now(),
-        }
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        # Hämtar tunnan
-        tunnor = fetchData(self._hass)
-        tunna = self.hittaTunna(tunnor)
-
-        self._attr_native_value = tunna
-        self._attr_extra_state_attributes = {
-            "Datetime": omvandlaTillDatetime(tunnor[self._attr_native_value]),
-            "Veckodag": tunnor[self._attr_native_value].split(" ")[0],
-            "Dagar": dagarTillDatum(tunnor[self._attr_native_value]),
-            "Rentext": self._attr_native_value
-            + " om "
-            + str(dagarTillDatum(tunnor[self._attr_native_value]))
-            + " dagar",
-            "Hämtning": tunnor[tunna],
-            "Uppdaterad": datetime.now(),
-        }
-        self.async_write_ha_state()  # Säger till HA att uppdatera
-
-    def update(self) -> None:
-        """Används ej"""
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def state(self) -> str:
-        return self._attr_native_value

@@ -13,7 +13,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.core import HomeAssistant
 from bs4 import BeautifulSoup
-from .const import DOMAIN, CONFIG_FILE, CONF_COORDINATOR_UPDATE_INTERVAL
+from .const import DOMAIN, CONF_COORDINATOR_UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,16 +32,6 @@ async def async_post_page(vmeab, URL, data):
     return BeautifulSoup(text, "html.parser")
 
 
-def saveFile(hass: HomeAssistant, tunnor):
-    jsonFilePath = Path(hass.config.path(CONFIG_FILE))
-    jsonFilePath.touch(exist_ok=True)
-
-    jsonFile = open(jsonFilePath, "w", encoding="utf-8")
-    jsonFile.write(json.dumps(tunnor, indent=4))
-
-    jsonFile.close()
-
-
 class MyCoordinator(DataUpdateCoordinator):
     """Coordinator som uppdaterar datan vi har"""
 
@@ -56,6 +46,7 @@ class MyCoordinator(DataUpdateCoordinator):
         self._street = StreetName
         self._city = City
         self._hass = hass
+        self.tunnor = {}  # Unprotected
 
     async def _async_update_data(self):
         """Fetcha infon här."""
@@ -106,4 +97,4 @@ class MyCoordinator(DataUpdateCoordinator):
             )
 
         tunnor["last_update"] = time.time()
-        saveFile(self._hass, tunnor)  # Spara ner resultatet
+        self.tunnor = tunnor

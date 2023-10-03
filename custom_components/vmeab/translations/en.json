@@ -1,21 +1,21 @@
 {
-    "config": {
-      "title": "VMEAB Sophämtning",
-      "step": {
-        "user": {
-          "title": "VMEAB Sophämtning",
-          "data": {
-            "city": "Stad",
-            "street": "Gata",
-            "update_interval": "Uppdateringsfrekvens(sekunder)"
-          }
+  "config": {
+    "title": "VMEAB Sophämtning",
+    "step": {
+      "user": {
+        "title": "VMEAB Sophämtning",
+        "data": {
+          "city": "Stad",
+          "street": "Gata",
+          "update_interval": "Uppdateringsfrekvens(sekunder)"
         }
-      },
-      "error": {
-        "already_configured": "Device is already configured"
-      },
-      "abort": {
-        "already_configured": "Device is already configured"
       }
+    },
+    "error": {
+      "already_configured": "Device is already configured"
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
     }
+  }
 }

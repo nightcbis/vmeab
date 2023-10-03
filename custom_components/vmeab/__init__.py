@@ -10,7 +10,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     """Called from Config Flow"""
 
     hass.data.setdefault(DOMAIN, {})
-    # hass.data[DOMAIN][config_entry.entry_id] = config_entry.data
 
     StreetName = config_entry.data.get(CONF_STREET)
     City = config_entry.data.get(CONF_CITY)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def manadsNummer(manad):
@@ -44,9 +44,17 @@ def svenskaTillEngelska(svenska):
 
 def dagarTillDatum(datum):
     now = datetime.now()
-    datumDatetime = omvandlaTillDatetime(datum)
 
-    diff = int(str(datumDatetime - now).split(" ")[0]) + 1
+    # Vi lägger hämtningen till precis innan midnatt för diff-räkningen blir lättare.
+    datumDatetime = omvandlaTillDatetime(datum) + timedelta(
+        hours=23, minutes=59, seconds=59
+    )
+
+    try:
+        diff = int(str(datumDatetime - now).split(" ")[0])  # Mer än 1 dag skillnad.
+    except:
+        diff = 0  # Idag. Så mindre än 1 dag skillnad.
+
     return diff
 
 
