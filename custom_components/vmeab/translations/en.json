@@ -1,4 +1,5 @@
 {
+  "title": "VMEAB Sophämtning",
   "config": {
     "title": "VMEAB Sophämtning",
     "step": {
@@ -24,10 +25,10 @@
           "0": "Today",
           "1": "Tomorrow",
           "2": "In 2 days",
-          "7": "1 week",
-          "14": "2 weeks",
-          "21": "3 weeks",
-          "28": "4 weeks"
+          "7": "In 1 week",
+          "14": "In 2 weeks",
+          "21": "In 3 weeks",
+          "28": "In 4 weeks"
         },
         "state_attributes": {
           "Dagar": {
