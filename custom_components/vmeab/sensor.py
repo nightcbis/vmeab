@@ -69,7 +69,6 @@ class Trash(CoordinatorEntity, SensorEntity):
             ATTR_MANUFACTURER: "@nightcbis",
         }
         self._attr_has_entity_name = True
-        print(f"Name: {self._name}")
 
     def update(self) -> None:
         """Används ej"""
@@ -121,7 +120,6 @@ class Trashcan(Trash):
 
     def attributes(self, tunnor):
         """Funktion för att fixa attributes så det slipper ligga dubbelt i __init__ samt _handle_coordinator_update"""
-        print(f"Friendly name: {self._name}")
         return {
             "Hämtning": tunnor[self._name],
             "Datetime": omvandlaTillDatetime(tunnor[self._name]),
