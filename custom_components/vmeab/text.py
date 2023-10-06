@@ -46,7 +46,6 @@ class Texter(CoordinatorEntity, TextEntity):
         self._attr_has_entity_name = True
 
         smeknamn = self.readConfig()
-        print(smeknamn)
 
         self._coordinator.smeknamn[self._name] = smeknamn
 
