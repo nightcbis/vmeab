@@ -5,6 +5,10 @@ from homeassistant.components.text import TextEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.core import HomeAssistant
 from homeassistant.const import ATTR_IDENTIFIERS, ATTR_MANUFACTURER, ATTR_NAME
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+)
 from .const import DOMAIN, DEVICE_NAME, CONF_FILE
 import json
 
@@ -19,12 +23,35 @@ async def async_setup_entry(
     for tunna, _ in tunnor.items():
         if tunna == "last_update":
             continue
-        entities.append(Texter(hass, tunna))
+        entities.append(Texter(hass, coordinator, tunna))
 
     async_add_entities(entities)
 
 
-class Texter(TextEntity):
+class Texter(CoordinatorEntity, TextEntity):
+    def __init__(
+        self, hass: HomeAssistant, coordinator: DataUpdateCoordinator, name
+    ) -> None:
+        super().__init__(coordinator)
+        self._name = name
+        self._attr_unique_id = name
+        self._hass = hass
+        self._coordinator = coordinator
+
+        self._attr_device_info = {
+            ATTR_IDENTIFIERS: {(DOMAIN, DEVICE_NAME)},
+            ATTR_NAME: DEVICE_NAME,
+            ATTR_MANUFACTURER: "@nightcbis",
+        }
+        self._attr_has_entity_name = True
+
+        smeknamn = self.readConfig()
+        print(smeknamn)
+
+        self._coordinator.smeknamn[self._name] = smeknamn
+
+        self._attr_native_value = smeknamn
+
     def writeConfig(self, smeknamn) -> None:
         path = self._hass.config.path(CONF_FILE)
         configFile = Path(path)
@@ -41,7 +68,10 @@ class Texter(TextEntity):
         with open(path, "w", encoding="utf-8") as configFile:
             configFile.write(json.dumps(data, indent=4))
 
-    def readConfig(self):
+    def readConfig(self, tunna="NAME"):
+        if tunna == "NAME":
+            tunna = self._name
+
         path = self._hass.config.path(CONF_FILE)
         configFile = Path(path)
         configFile.touch(exist_ok=True)
@@ -50,30 +80,12 @@ class Texter(TextEntity):
             data = json.loads(configFile.read())
 
         try:
-            smeknamn = data[self._name]
-            print(smeknamn)
+            smeknamn = data[tunna]
         except:
-            print("Finns ej! Skapa inlägg i filen!")
-            self.writeConfig(self._name, self._name)
-            smeknamn = self._name
+            self.writeConfig(tunna, tunna)
+            smeknamn = tunna
 
         return smeknamn
-
-    def __init__(self, hass: HomeAssistant, name) -> None:
-        self._name = name
-        self._attr_unique_id = name
-        self._hass = hass
-
-        self._attr_device_info = {
-            ATTR_IDENTIFIERS: {(DOMAIN, DEVICE_NAME)},
-            ATTR_NAME: DEVICE_NAME,
-            ATTR_MANUFACTURER: "@nightcbis",
-        }
-        self._attr_has_entity_name = True
-
-        smeknamn = self.readConfig()
-
-        self._attr_native_value = smeknamn
 
     def update(self) -> None:
         """Används ej"""
@@ -82,7 +94,6 @@ class Texter(TextEntity):
         """Set value"""
         self._attr_native_value = value
         self.writeConfig(value)
-        print(value)
 
     @property
     def name(self) -> str | None:

@@ -11,6 +11,9 @@ from .const import (
     DOMAIN,
     DEVICE_NAME,
 )
+
+from .text import Texter
+
 from pathlib import Path
 
 from homeassistant.components.sensor import (
@@ -146,6 +149,7 @@ class NextTrashCan(Trash):
         # Hass, coordinator, name, state
         super().__init__(hass, coordinator, self._name, tunna)
 
+        self._attr_native_value = self._coordinator.smeknamn[tunna]
         self._attr_extra_state_attributes = self.attributes(tunnor, tunna)
 
     @callback
@@ -155,19 +159,22 @@ class NextTrashCan(Trash):
         tunnor = self._coordinator.tunnor
         # tunnor = Trash.fetchData(self._hass)
         nastaTunna = self.hittaTunna(tunnor)
+        smeknamn = self._coordinator.smeknamn[nastaTunna]
 
-        self._attr_native_value = nastaTunna
+        self._attr_native_value = smeknamn
         self._attr_extra_state_attributes = self.attributes(tunnor, nastaTunna)
 
         self.async_write_ha_state()  # Säger till HA att uppdatera
 
     def attributes(self, tunnor, nastaTunna):
         """Funktion för att fixa attributes så det slipper ligga dubbelt i __init__ samt _handle_coordinator_update"""
+        smeknamn = self._coordinator.smeknamn[nastaTunna]
+
         return {
             "Datetime": omvandlaTillDatetime(tunnor[nastaTunna]),
             "Veckodag": tunnor[nastaTunna].split(" ")[0],
             "Dagar": f"{dagarTillDatum(tunnor[nastaTunna])} dagar",
-            "Rentext": f"{self._attr_native_value} om {str(dagarTillDatum(tunnor[nastaTunna]))} dagar",
+            "Rentext": f"{smeknamn} om {str(dagarTillDatum(tunnor[nastaTunna]))} dagar",
             "Hämtning": tunnor[nastaTunna],
             "Uppdaterad": datetime.now(),
             "friendly_name": self._name,

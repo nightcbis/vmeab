@@ -5,7 +5,7 @@ from homeassistant.core import HomeAssistant
 from .const import DOMAIN, CONF_CITY, CONF_STREET
 from .coordinator import MyCoordinator
 
-PLATFORMS = ["sensor", "text"]
+PLATFORMS = ["text", "sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -21,13 +21,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     hass.data[DOMAIN][config_entry.entry_id] = coordinator
 
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
+    wait = hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(config_entry, PLATFORMS[0])
     )
 
-    # hass.async_create_task(
-    #    hass.config_entries.async_forward_entry_setup(config_entry, "text")
-    # )
+    await wait
+    # Vi måste få iordning på text-platform innan sensor för att kunna ladda in smeknamnen på dem.
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(config_entry, PLATFORMS[1])
+    )
 
     return True
 
