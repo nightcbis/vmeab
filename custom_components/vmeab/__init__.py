@@ -2,8 +2,9 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, CONF_CITY, CONF_STREET
+from .const import DOMAIN, CONF_CITY, CONF_STREET, CONF_FILE
 from .coordinator import MyCoordinator
+import os
 
 PLATFORMS = ["text", "sensor"]
 
@@ -41,5 +42,8 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     )
     if unload_ok:
         del hass.data[DOMAIN]
+
+    path = hass.config.path(CONF_FILE)
+    os.remove(path)
 
     return unload_ok

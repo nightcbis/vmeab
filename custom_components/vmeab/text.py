@@ -97,7 +97,7 @@ class Texter(CoordinatorEntity, TextEntity):
         try:
             smeknamn = data[tunna]
         except:
-            self.writeConfig(tunna, tunna)
+            self.writeConfig(tunna)
             smeknamn = tunna
 
         return smeknamn
