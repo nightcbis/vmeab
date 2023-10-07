@@ -149,7 +149,6 @@ class NextTrashCan(Trash):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Den här funktionen körs när coordinator kör sin uppdatering"""
-        print("UPDATE!")
         # Hämtar tunnan
         tunnor = self._coordinator.tunnor
         # tunnor = Trash.fetchData(self._hass)

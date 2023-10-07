@@ -62,6 +62,7 @@ class Texter(CoordinatorEntity, TextEntity):
                 data = {}
 
         data[self._name] = smeknamn
+        self._coordinator.smeknamn[self._name] = smeknamn
 
         with open(path, "w", encoding="utf-8") as configFile:
             configFile.write(json.dumps(data, indent=4))
