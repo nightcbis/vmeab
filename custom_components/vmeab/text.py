@@ -19,6 +19,7 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     tunnor = coordinator.tunnor
 
+    # Skapar en dict på vilka tunnor som finns, men skippar last_update
     entities = []
     for tunna, _ in tunnor.items():
         if tunna == "last_update":
@@ -29,6 +30,8 @@ async def async_setup_entry(
 
 
 class Texter(CoordinatorEntity, TextEntity):
+    """Klass för text-fälten som skapar smeknamn för NextPickup"""
+
     def __init__(
         self, hass: HomeAssistant, coordinator: DataUpdateCoordinator, name
     ) -> None:
@@ -51,16 +54,21 @@ class Texter(CoordinatorEntity, TextEntity):
         self._attr_native_value = smeknamn
 
     def writeConfig(self, smeknamn) -> None:
+        """Sparar ner smeknamnet i config-filen samt i coordinatorn"""
+
+        # Skapar filen om den inte finns
         path = self._hass.config.path(CONF_FILE)
         configFile = Path(path)
         configFile.touch(exist_ok=True)
 
+        # Öppnar och försöker läsa den som json. Om inte så skapar vi en tom data
         with open(path, "r", encoding="utf-8") as configFile:
             try:
                 data = json.loads(configFile.read())
             except:
                 data = {}
 
+        # Sparar ner i både data(till filen) och i coordinator för realtid.
         data[self._name] = smeknamn
         self._coordinator.smeknamn[self._name] = smeknamn
 
@@ -68,16 +76,24 @@ class Texter(CoordinatorEntity, TextEntity):
             configFile.write(json.dumps(data, indent=4))
 
     def readConfig(self, tunna="NAME"):
+        """Läser in smeknamn på en tunna och om ingen tunna defineras så används self._name"""
+        # Om ingen tunna defineras så kör vi mot self.
         if tunna == "NAME":
             tunna = self._name
 
+        # Skapar filen om den inte finns
         path = self._hass.config.path(CONF_FILE)
         configFile = Path(path)
         configFile.touch(exist_ok=True)
 
+        # Laddar in filen och kollar så den är json. Om inte så skapar vi en tom data
         with open(path, "r", encoding="utf-8") as configFile:
-            data = json.loads(configFile.read())
+            try:
+                data = json.loads(configFile.read())
+            except:
+                data = {}
 
+        # Om inget smeknamn finns så sparar vi ner tunnans namn som smeknamn.
         try:
             smeknamn = data[tunna]
         except:
@@ -90,7 +106,7 @@ class Texter(CoordinatorEntity, TextEntity):
         """Används ej"""
 
     async def async_set_value(self, value: str) -> None:
-        """Set value"""
+        """Den här funktionen körs när man skriver i nytt smeknamn i ui't"""
         if value == "":
             value = self._name
         self._attr_native_value = value
