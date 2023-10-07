@@ -47,9 +47,9 @@ class MyCoordinator(DataUpdateCoordinator):
         self._city = City
         self._hass = hass
         self.tunnor = {}  # Unprotected Här sparar vi tunnorna och deras hämtning
-        self.smeknamn = (
-            {}
-        )  # Här sparar vi smeknamnen på tunnorna. Men allt jobb görs i text.py
+
+        # Här sparar vi smeknamnen på tunnorna. Men allt jobb görs i text.py
+        self.smeknamn = {}
 
     async def _async_update_data(self):
         """Fetcha infon här."""

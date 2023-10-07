@@ -12,10 +12,6 @@ from .const import (
     DEVICE_NAME,
 )
 
-from .text import Texter
-
-from pathlib import Path
-
 from homeassistant.components.sensor import (
     SensorEntity,
 )
@@ -116,7 +112,6 @@ class Trashcan(Trash):
         # Hämtar ny data
         tunnor = self._coordinator.tunnor
 
-        # self._attr_native_value = tunnor[self._name]
         self._attr_native_value = dagarTillDatum(tunnor[self._name])
         self._attr_extra_state_attributes = self.attributes(tunnor)
         self.async_write_ha_state()  # Måste köras för att HA ska förstå att vi uppdaterat allt klart.
@@ -129,7 +124,6 @@ class Trashcan(Trash):
             "Veckodag": tunnor[self._name].split(" ")[0],
             "Dagar": dagarTillDatum(tunnor[self._name]),
             "Uppdaterad": datetime.now(),
-            # "friendly_name": self._name,
         }
 
 
@@ -155,6 +149,7 @@ class NextTrashCan(Trash):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Den här funktionen körs när coordinator kör sin uppdatering"""
+        print("UPDATE!")
         # Hämtar tunnan
         tunnor = self._coordinator.tunnor
         # tunnor = Trash.fetchData(self._hass)
