@@ -48,7 +48,6 @@ class Texter(CoordinatorEntity, TextEntity):
         smeknamn = self.readConfig()
 
         self._coordinator.smeknamn[self._name] = smeknamn
-
         self._attr_native_value = smeknamn
 
     def writeConfig(self, smeknamn) -> None:
@@ -89,10 +88,15 @@ class Texter(CoordinatorEntity, TextEntity):
     def update(self) -> None:
         """Används ej"""
 
-    def set_value(self, value: str) -> None:
+    async def async_set_value(self, value: str) -> None:
         """Set value"""
         self._attr_native_value = value
         self.writeConfig(value)
+        self.async_schedule_update_ha_state(force_refresh=False)
+
+    @property
+    def native_value(self) -> str | None:
+        return self._attr_native_value
 
     @property
     def name(self) -> str | None:
