@@ -91,9 +91,12 @@ class Texter(CoordinatorEntity, TextEntity):
 
     async def async_set_value(self, value: str) -> None:
         """Set value"""
+        if value == "":
+            value = self._name
         self._attr_native_value = value
         self.writeConfig(value)
         self.async_schedule_update_ha_state(force_refresh=False)
+        await self._coordinator.async_request_refresh()
 
     @property
     def native_value(self) -> str | None:
