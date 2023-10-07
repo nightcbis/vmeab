@@ -49,9 +49,6 @@
           "Hämtning": {
             "name": "Pickup"
           },
-          "Rentext": {
-            "name": "Clean text"
-          },
           "Veckodag": {
             "name": "Weekdays",
             "state": {

@@ -37,6 +37,16 @@ def svenskaTillEngelska(svenska):
         "october": "oktober",
         "november": "november",
         "december": "december",
+        "måndag": "monday",
+        "tisdag": "tuesday",
+        "onsdag": "wednesday",
+        "torsdag": "thursday",
+        "fredag": "friday",
+        "monday": "måndag",
+        "tuesday": "tisdag",
+        "wednesday": "onsdag",
+        "thursday": "torsdag",
+        "friday": "fredag",
     }
 
     return engelska[svenska]

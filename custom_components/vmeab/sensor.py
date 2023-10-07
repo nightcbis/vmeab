@@ -5,7 +5,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 from datetime import datetime
-from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
+from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum, svenskaTillEngelska
 import json
 from .const import (
     DOMAIN,
@@ -164,11 +164,17 @@ class NextTrashCan(Trash):
         """Funktion för att fixa attributes så det slipper ligga dubbelt i __init__ samt _handle_coordinator_update"""
         smeknamn = self._coordinator.smeknamn[nastaTunna]
 
+        veckodag = tunnor[nastaTunna].split(" ")[0].lower()
+        veckodagEngelska = svenskaTillEngelska(veckodag)
+
         return {
+            "Template sv/siffror": f"{smeknamn} om {str(dagarTillDatum(tunnor[nastaTunna]))} dagar",
+            "Template en/numbers": f"{smeknamn} in {str(dagarTillDatum(tunnor[nastaTunna]))} days",
+            "Template sv/dag": f"{smeknamn} på {veckodag}",
+            "Template en/day": f"{smeknamn} on {veckodagEngelska}",
             "Datetime": omvandlaTillDatetime(tunnor[nastaTunna]),
             "Veckodag": tunnor[nastaTunna].split(" ")[0],
             "Dagar": f"{dagarTillDatum(tunnor[nastaTunna])} dagar",
-            "Rentext": f"{smeknamn} om {str(dagarTillDatum(tunnor[nastaTunna]))} dagar",
             "Hämtning": tunnor[nastaTunna],
             "Uppdaterad": datetime.now(),
             "friendly_name": self._name,
