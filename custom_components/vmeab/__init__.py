@@ -2,8 +2,11 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, CONF_CITY, CONF_STREET
+from .const import DOMAIN, CONF_CITY, CONF_STREET, CONF_FILE
 from .coordinator import MyCoordinator
+import os
+
+PLATFORMS = ["text", "sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -19,8 +22,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     hass.data[DOMAIN][config_entry.entry_id] = coordinator
 
+    wait = hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(config_entry, PLATFORMS[0])
+    )
+    await wait
+
+    # Vi måste få iordning på text-platform innan sensor för att kunna ladda in smeknamnen på dem.
     hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
+        hass.config_entries.async_forward_entry_setup(config_entry, PLATFORMS[1])
     )
 
     return True
@@ -28,8 +37,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(config_entry, "sensor")
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        config_entry, PLATFORMS
+    )
     if unload_ok:
         del hass.data[DOMAIN]
+
+    path = hass.config.path(CONF_FILE)
+    os.remove(path)
 
     return unload_ok

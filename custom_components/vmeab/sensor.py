@@ -5,13 +5,12 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 from datetime import datetime
-from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum
+from .datumOmvandlare import omvandlaTillDatetime, dagarTillDatum, svenskaTillEngelska
 import json
 from .const import (
     DOMAIN,
     DEVICE_NAME,
 )
-from pathlib import Path
 
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -69,7 +68,6 @@ class Trash(CoordinatorEntity, SensorEntity):
             ATTR_MANUFACTURER: "@nightcbis",
         }
         self._attr_has_entity_name = True
-        print(f"Name: {self._name}")
 
     def update(self) -> None:
         """Används ej"""
@@ -114,21 +112,18 @@ class Trashcan(Trash):
         # Hämtar ny data
         tunnor = self._coordinator.tunnor
 
-        # self._attr_native_value = tunnor[self._name]
         self._attr_native_value = dagarTillDatum(tunnor[self._name])
         self._attr_extra_state_attributes = self.attributes(tunnor)
         self.async_write_ha_state()  # Måste köras för att HA ska förstå att vi uppdaterat allt klart.
 
     def attributes(self, tunnor):
         """Funktion för att fixa attributes så det slipper ligga dubbelt i __init__ samt _handle_coordinator_update"""
-        print(f"Friendly name: {self._name}")
         return {
             "Hämtning": tunnor[self._name],
             "Datetime": omvandlaTillDatetime(tunnor[self._name]),
             "Veckodag": tunnor[self._name].split(" ")[0],
             "Dagar": dagarTillDatum(tunnor[self._name]),
             "Uppdaterad": datetime.now(),
-            # "friendly_name": self._name,
         }
 
 
@@ -148,6 +143,7 @@ class NextTrashCan(Trash):
         # Hass, coordinator, name, state
         super().__init__(hass, coordinator, self._name, tunna)
 
+        self._attr_native_value = self._coordinator.smeknamn[tunna]
         self._attr_extra_state_attributes = self.attributes(tunnor, tunna)
 
     @callback
@@ -157,19 +153,28 @@ class NextTrashCan(Trash):
         tunnor = self._coordinator.tunnor
         # tunnor = Trash.fetchData(self._hass)
         nastaTunna = self.hittaTunna(tunnor)
+        smeknamn = self._coordinator.smeknamn[nastaTunna]
 
-        self._attr_native_value = nastaTunna
+        self._attr_native_value = smeknamn
         self._attr_extra_state_attributes = self.attributes(tunnor, nastaTunna)
 
         self.async_write_ha_state()  # Säger till HA att uppdatera
 
     def attributes(self, tunnor, nastaTunna):
         """Funktion för att fixa attributes så det slipper ligga dubbelt i __init__ samt _handle_coordinator_update"""
+        smeknamn = self._coordinator.smeknamn[nastaTunna]
+
+        veckodag = tunnor[nastaTunna].split(" ")[0].lower()
+        veckodagEngelska = svenskaTillEngelska(veckodag)
+
         return {
+            "Template sv/siffror": f"{smeknamn} om {str(dagarTillDatum(tunnor[nastaTunna]))} dagar",
+            "Template en/numbers": f"{smeknamn} in {str(dagarTillDatum(tunnor[nastaTunna]))} days",
+            "Template sv/dag": f"{smeknamn} på {veckodag}",
+            "Template en/day": f"{smeknamn} on {veckodagEngelska}",
             "Datetime": omvandlaTillDatetime(tunnor[nastaTunna]),
             "Veckodag": tunnor[nastaTunna].split(" ")[0],
             "Dagar": f"{dagarTillDatum(tunnor[nastaTunna])} dagar",
-            "Rentext": f"{self._attr_native_value} om {str(dagarTillDatum(tunnor[nastaTunna]))} dagar",
             "Hämtning": tunnor[nastaTunna],
             "Uppdaterad": datetime.now(),
             "friendly_name": self._name,

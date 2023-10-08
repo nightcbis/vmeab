@@ -46,11 +46,21 @@ class MyCoordinator(DataUpdateCoordinator):
         self._street = StreetName
         self._city = City
         self._hass = hass
-        self.tunnor = {}  # Unprotected
+        self.tunnor = {}  # Unprotected Här sparar vi tunnorna och deras hämtning
 
-    async def _async_update_data(self):
+        # Här sparar vi smeknamnen på tunnorna. Men allt jobb görs i text.py
+        self.smeknamn = {}
+
+    async def _async_update_data(self) -> None:
         """Fetcha infon här."""
-        # tunnor = vmeab_scrape("Flundregatan 29", "Västervik")
+        # Ifall att den här funktionen körs pga en text-entity uppdateras så vill vi inte kontakta VMEAB i onödan
+        # Så vi kontrollerar tiden sedan senaste update och skippar allt om den är mindre än CONF_..._INTERVAL
+        try:
+            now = time.time()
+            if now - self.tunnor["last_update"] < int(CONF_COORDINATOR_UPDATE_INTERVAL):
+                return
+        except:
+            pass
 
         URL = "https://www.vmeab.se/tjanster/avfall--atervinning/min-sophamtning/"
         HOSTURL = "https://www.vmeab.se"
