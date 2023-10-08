@@ -162,21 +162,58 @@ class NextTrashCan(Trash):
 
     def attributes(self, tunnor, nastaTunna):
         """Funktion för att fixa attributes så det slipper ligga dubbelt i __init__ samt _handle_coordinator_update"""
+        # Hämtar smeknamn för tunnan.
         smeknamn = self._coordinator.smeknamn[nastaTunna]
 
-        veckodag = tunnor[nastaTunna].split(" ")[0].lower()
+        # Tisdag 10 oktober t.ex.
+        hamtning = tunnor[nastaTunna]
+
+        # Tar ut Tisdag ur "Tisdag 10 oktober" och gör till liten bokstav. Används i Template
+        veckodag = hamtning.split(" ")[0].lower()
+
+        # Omvandlar till engelska
         veckodagEngelska = svenskaTillEngelska(veckodag)
 
+        # Räknar ut antal dagar till hämtning bara.
+        antalDagarTillHamtning = str(dagarTillDatum(hamtning))
+
+        # Sparar även ner i datetime ifall att vi vill matcha mot det i framtiden.
+        hamtningSomDatetime = omvandlaTillDatetime(hamtning)
+
+        # Hämtar ut veckodag här igen, men den här gången kör vi inte lower case. Den här presenteras som den är.
+        veckodagHamtningArPa = hamtning.split(" ")[0]
+
+        # Tid att visas som "Uppdaterad"
+        uppdaterad = datetime.now()
+
+        # Lite logik för att ändra "tisdag" till "imorgon" t.ex.
+
+        addon = "på"
+        addonEn = "on"
+        if int(antalDagarTillHamtning) == 2:
+            veckodag = "i övermorgon"
+            addon = ""
+        elif int(antalDagarTillHamtning) == 1:
+            veckodag = "i morgon"
+            veckodagEngelska = "tomorrow"
+            addon = ""
+            addonEn = ""
+        elif int(antalDagarTillHamtning) == 0:
+            veckodag = "i dag"
+            veckodagEngelska = "today"
+            addon = ""
+            addonEn = ""
+
         return {
-            "Template sv/siffror": f"{smeknamn} om {str(dagarTillDatum(tunnor[nastaTunna]))} dagar",
-            "Template en/numbers": f"{smeknamn} in {str(dagarTillDatum(tunnor[nastaTunna]))} days",
-            "Template sv/dag": f"{smeknamn} på {veckodag}",
-            "Template en/day": f"{smeknamn} on {veckodagEngelska}",
-            "Datetime": omvandlaTillDatetime(tunnor[nastaTunna]),
-            "Veckodag": tunnor[nastaTunna].split(" ")[0],
-            "Dagar": f"{dagarTillDatum(tunnor[nastaTunna])} dagar",
-            "Hämtning": tunnor[nastaTunna],
-            "Uppdaterad": datetime.now(),
+            "Template sv/siffror": f"{smeknamn} om {antalDagarTillHamtning} dagar",
+            "Template en/numbers": f"{smeknamn} in {antalDagarTillHamtning} days",
+            "Template sv/dag": f"{smeknamn} {addon} {veckodag}",
+            "Template en/day": f"{smeknamn} {addonEn} {veckodagEngelska}",
+            "Veckodag": veckodagHamtningArPa,
+            "Dagar": f"{antalDagarTillHamtning}",
+            "Datetime": hamtningSomDatetime,
+            "Hämtning": hamtning,
+            "Uppdaterad": uppdaterad,
             "friendly_name": self._name,
         }
 
