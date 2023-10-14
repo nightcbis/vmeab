@@ -43,6 +43,9 @@
               "6 dagar": "In 6 days"
             }
           },
+          "Tunnan efter": {
+            "name": "Next trashcan"
+          },
           "Uppdaterad": {
             "name": "Updated"
           },
