@@ -42,11 +42,15 @@ def svenskaTillEngelska(svenska):
         "onsdag": "wednesday",
         "torsdag": "thursday",
         "fredag": "friday",
+        "lördag": "saturday",
+        "söndag": "sunday",
         "monday": "måndag",
         "tuesday": "tisdag",
         "wednesday": "onsdag",
         "thursday": "torsdag",
         "friday": "fredag",
+        "saturday": "lördag",
+        "sunday": "söndag"
     }
 
     return engelska[svenska]
