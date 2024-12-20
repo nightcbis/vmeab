@@ -59,7 +59,9 @@
               "Tisdag": "Tuesdays",
               "Onsdag": "Wednesdays",
               "Torsdag": "Thursdays",
-              "Fredag": "Fridays"
+              "Fredag": "Fridays",
+              "Lördag": "Saturday",
+              "Söndag": "Sunday"
             }
           }
         }
