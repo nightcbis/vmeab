@@ -21,16 +21,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     await coordinator.async_config_entry_first_refresh()
 
     hass.data[DOMAIN][config_entry.entry_id] = coordinator
-
-    wait = hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(config_entry, PLATFORMS[0])
-    )
-    await wait
-
-    # Vi måste få iordning på text-platform innan sensor för att kunna ladda in smeknamnen på dem.
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(config_entry, PLATFORMS[1])
-    )
+    
+    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     return True
 
